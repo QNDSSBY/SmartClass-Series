@@ -1,0 +1,70 @@
+<Page x:Class="SmartClassNight.DesktopPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="3*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 上半部分：时间日期 -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock x:Name="LockTimeText"
+                       FontSize="80" FontWeight="Bold"
+                       FontFamily="Segoe UI Variable"
+                       Foreground="Black"
+                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock x:Name="FullDateText"
+                           FontSize="28" FontWeight="SemiBold"
+                           FontFamily="Segoe UI Variable"
+                           Foreground="Black"
+                           Margin="0,0,8,0"/>
+                <TextBlock x:Name="DayOfWeekText"
+                           FontSize="28" FontWeight="SemiBold"
+                           FontFamily="Segoe UI Variable"
+                           Foreground="Black"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 下半部分：左应用区 + 右天气 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <GridView x:Name="AppsGrid" Grid.Column="0"
+                      HorizontalAlignment="Center" VerticalAlignment="Top"
+                      Margin="20,20,0,0">
+                <GridView.ItemContainerTransitions>
+                    <TransitionCollection>
+                        <AddDeleteThemeTransition/>
+                        <ContentThemeTransition/>
+                    </TransitionCollection>
+                </GridView.ItemContainerTransitions>
+                <GridView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4"/>
+                    </ItemsPanelTemplate>
+                </GridView.ItemsPanel>
+                <GridView.ItemTemplate>
+                    <DataTemplate>
+                        <Button Width="100" Height="100" Margin="6"
+                                Background="#FFE6F0FA" Click="AppItem_Click"
+                                Tag="{Binding Path}">
+                            <StackPanel>
+                                <Image Source="{Binding Icon}" Width="32" Height="32" Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding Name}" FontSize="12" TextAlignment="Center"
+                                           TextWrapping="Wrap" MaxLines="2"/>
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
+
+            <WebView2 x:Name="WeatherWebView" Grid.Column="1" Margin="0,20,20,20"/>
+        </Grid>
+    </Grid>
+</Page>

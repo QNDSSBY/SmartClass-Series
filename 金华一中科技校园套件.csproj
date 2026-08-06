@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>None</WindowsPackageType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <RootNamespace>SmartClassNight</RootNamespace>
+    <AssemblyName>智慧课堂系统</AssemblyName>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Authors>支振超</Authors>
+    <Company>四狮五经</Company>
+    <Copyright>支振超 ©Copyright 保留所有权利</Copyright>
+    <DpiAwareness>PerMonitorV2</DpiAwareness>
+    <HighDpiAwareness>PerMonitorV2</HighDpiAwareness>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+    <Content Include="Assets\start.mp4" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="WebView2Runtime\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>WebView2Runtime\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250907003" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+  </ItemGroup>
+</Project>

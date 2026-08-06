@@ -1,0 +1,26 @@
+<Application
+    x:Class="SmartClassNight.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 全局字体：清晰锐利，适配所有缩放 -->
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Segoe UI Variable" />
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="FontFamily" Value="Segoe UI Variable" />
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="FontFamily" Value="Segoe UI Variable" />
+            </Style>
+            <Style TargetType="ListViewItem">
+                <Setter Property="FontFamily" Value="Segoe UI Variable" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
