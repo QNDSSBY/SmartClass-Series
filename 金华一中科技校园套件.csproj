@@ -24,7 +24,12 @@
 
   <ItemGroup>
     <Content Include="icon.ico" />
+    <Content Include="icon.png" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\start.mp4" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 新消息提示音：与网页 f18.llt-service.cn/weather 的 /alarm.mp3 为同一文件（离线可用） -->
+    <Content Include="Assets\alarm.mp3" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 内置默认壁纸（原 E:\background.JPG 等比缩放到 3840×2160，随程序一起安装） -->
+    <Content Include="Assets\background.jpg" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="WebView2Runtime\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>WebView2Runtime\%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -32,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250907003" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 </Project>

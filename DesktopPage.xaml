@@ -1,70 +1,339 @@
-<Page x:Class="SmartClassNight.DesktopPage"
+﻿<Page x:Class="SmartClassNight.DesktopPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:SmartClassNight">
 
+    <Page.Resources>
+        <!-- 卡片背景：高斯模糊 + 半透明（AcrylicBrush 会对卡片后面的壁纸做模糊） -->
+        <AcrylicBrush x:Key="ModuleCardBrush" TintColor="#FFFFFF" TintOpacity="0.30"
+                      TintLuminosityOpacity="0.55" FallbackColor="#D9FFFFFF"/>
+        <Style x:Key="ModuleCard" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource ModuleCardBrush}"/>
+            <Setter Property="BorderBrush" Value="#22000000"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="14,12"/>
+        </Style>
+        <Style x:Key="ModuleTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#CC1A1A1A"/>
+        </Style>
+        <Style x:Key="ModuleSub" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#991A1A1A"/>
+        </Style>
+    </Page.Resources>
+
+    <!-- 三屏横向分页：左滑/右滑切换（触屏滑动；鼠标滚轮、底部圆点也可切换）
+         第一屏：主页（时钟 + 今日课表 + 天气/降水/值日/班级/最近消息）
+         第二屏：校园自动打铃系统
+         第三屏：点歌系统 -->
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="1*"/>
-            <RowDefinition Height="3*"/>
-        </Grid.RowDefinitions>
+        <ScrollViewer x:Name="ScreenPager"
+                      HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Hidden"
+                      ZoomMode="Disabled"
+                      HorizontalSnapPointsType="Mandatory"
+                      HorizontalSnapPointsAlignment="Near"
+                      PointerWheelChanged="ScreenPager_PointerWheelChanged"
+                      ViewChanged="ScreenPager_ViewChanged">
+            <StackPanel Orientation="Horizontal">
+                <!-- ==================== 第一屏：主页 ==================== -->
+                <Grid x:Name="HomeScreen" Width="{Binding ActualWidth, ElementName=ScreenPager}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="3*"/>
+                    </Grid.RowDefinitions>
 
-        <!-- 上半部分：时间日期 -->
-        <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock x:Name="LockTimeText"
-                       FontSize="80" FontWeight="Bold"
-                       FontFamily="Segoe UI Variable"
-                       Foreground="Black"
-                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock x:Name="FullDateText"
-                           FontSize="28" FontWeight="SemiBold"
-                           FontFamily="Segoe UI Variable"
-                           Foreground="Black"
-                           Margin="0,0,8,0"/>
-                <TextBlock x:Name="DayOfWeekText"
-                           FontSize="28" FontWeight="SemiBold"
-                           FontFamily="Segoe UI Variable"
-                           Foreground="Black"/>
+                    <!-- 上半部分：时间日期（灵动岛展开时整体淡出；时间文字带白色描边） -->
+                    <StackPanel x:Name="ClockPanel" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid x:Name="LockTimeHost" HorizontalAlignment="Center" Margin="0,0,0,8">
+                            <TextBlock x:Name="LockTimeText"
+                                       FontSize="80" FontWeight="Bold"
+                                       FontFamily="Segoe UI Variable"
+                                       Foreground="Black"
+                                       HorizontalAlignment="Center"/>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <!-- 日期 / 星期：与时间一样带白色描边（白字偏移副本在代码里生成） -->
+                            <Grid x:Name="FullDateHost" Margin="0,0,8,0">
+                                <TextBlock x:Name="FullDateText"
+                                           FontSize="28" FontWeight="SemiBold"
+                                           FontFamily="Segoe UI Variable"
+                                           Foreground="Black"
+                                           HorizontalAlignment="Center"/>
+                            </Grid>
+                            <Grid x:Name="DayOfWeekHost">
+                                <TextBlock x:Name="DayOfWeekText"
+                                           FontSize="28" FontWeight="SemiBold"
+                                           FontFamily="Segoe UI Variable"
+                                           Foreground="Black"
+                                           HorizontalAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 下半部分：左今日课表 + 右本地模块 -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- ============ 左列：今日课表 + 明日课表（并排两列，样式与值日一致） ============ -->
+                        <Grid Grid.Column="0" Margin="20,20,8,20" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 左：今日课表 -->
+                            <Border Grid.Column="0" Style="{StaticResource ModuleCard}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <TextBlock Style="{StaticResource ModuleTitle}"
+                                                   Text="今日课表" VerticalAlignment="Center" FontSize="18"/>
+                                        <TextBlock x:Name="ScheduleDayText" Style="{StaticResource ModuleSub}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Text="--"/>
+                                    </Grid>
+                                    <ScrollViewer Grid.Row="1" Margin="0,10,0,0"
+                                                  VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
+                                        <StackPanel x:Name="ScheduleList" Spacing="10"/>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
+
+                            <!-- 右：明日课表 -->
+                            <Border Grid.Column="1" Style="{StaticResource ModuleCard}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <TextBlock Style="{StaticResource ModuleTitle}"
+                                                   Text="明日课表" VerticalAlignment="Center" FontSize="18"/>
+                                        <TextBlock x:Name="TomorrowDayText" Style="{StaticResource ModuleSub}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Text="--"/>
+                                    </Grid>
+                                    <ScrollViewer Grid.Row="1" Margin="0,10,0,0"
+                                                  VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
+                                        <StackPanel x:Name="TomorrowList" Spacing="10"/>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- ============ 右列：工具栏 + 原双列模块布局 ============ -->
+                        <Grid Grid.Column="1" Margin="8,20,20,20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- 按钮栏：刷新 / 查看桌面 -->
+                            <Grid Grid.Row="0" Margin="0,0,0,10" ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="RefreshButton" Height="44" HorizontalAlignment="Stretch"
+                                        Background="White" Foreground="#FF1A1A1A" FontSize="15" FontWeight="SemiBold"
+                                        BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="6"
+                                        Click="RefreshButton_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                        <FontIcon Glyph="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                        <TextBlock Text="刷新" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="DesktopExplorerButton" Grid.Column="1" Height="44" HorizontalAlignment="Stretch"
+                                        Background="White" Foreground="#FF1A1A1A" FontSize="15" FontWeight="SemiBold"
+                                        BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="6"
+                                        Click="DesktopExplorerButton_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                        <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                        <TextBlock Text="查看桌面" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <!-- 原布局：双列模块（左：天气 + 降水；右：值日 + 班级 + 最近消息） -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 模块左列 -->
+                                    <StackPanel Grid.Column="0" Spacing="12">
+
+                                        <!-- ============ 天气 ============ -->
+                                        <Border Style="{StaticResource ModuleCard}">
+                                            <StackPanel Spacing="6">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource ModuleTitle}" Text="天气" VerticalAlignment="Center"/>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                                        <TextBlock x:Name="WeatherUpdateText" Style="{StaticResource ModuleSub}"
+                                                                   Text="--" VerticalAlignment="Center"/>
+                                                        <Button x:Name="CityButton" Content="金华市 ▾" FontSize="12" Padding="8,2"
+                                                                MinWidth="0" MinHeight="0" CornerRadius="6"
+                                                                Background="#14000000" BorderThickness="0"
+                                                                Click="CityButton_Click"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,2,0,0">
+                                                    <TextBlock x:Name="WeatherTempText" Text="--°" FontSize="48" FontWeight="Bold"
+                                                               Foreground="#FF1A1A1A" VerticalAlignment="Center"/>
+                                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                                        <TextBlock x:Name="WeatherDescText" Text="--" FontSize="17" FontWeight="SemiBold"
+                                                                   Foreground="#FF1A1A1A"/>
+                                                        <TextBlock x:Name="WeatherRangeText" Style="{StaticResource ModuleSub}" Text="--"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <TextBlock x:Name="WeatherDetailText" Style="{StaticResource ModuleSub}"
+                                                           Text="--" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- ============ 未来 2 小时降水 ============ -->
+                                        <Border Style="{StaticResource ModuleCard}">
+                                            <StackPanel Spacing="8">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource ModuleTitle}" Text="未来 2 小时降水"
+                                                               VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="PrecipSummaryText" Style="{StaticResource ModuleSub}"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center" Text="--"/>
+                                                </Grid>
+                                                <Grid x:Name="PrecipBars" Height="52" ColumnSpacing="2"/>
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource ModuleSub}" Text="现在" HorizontalAlignment="Left"/>
+                                                    <TextBlock Style="{StaticResource ModuleSub}" Text="1 小时" HorizontalAlignment="Center"/>
+                                                    <TextBlock Style="{StaticResource ModuleSub}" Text="2 小时" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- ============ 晚自习作业（数据与大屏 dashboard 的 get_homework 一致）
+                                             字号偏大；条数多时逐条轮播显示 ============ -->
+                                        <Border Style="{StaticResource ModuleCard}">
+                                            <StackPanel Spacing="8">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource ModuleTitle}" Text="晚自习作业" VerticalAlignment="Center"/>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                                        <TextBlock x:Name="HomeworkIndexText" Style="{StaticResource ModuleSub}"
+                                                                   VerticalAlignment="Center" Text=""/>
+                                                        <TextBlock x:Name="HomeworkTimeText" Style="{StaticResource ModuleSub}"
+                                                                   VerticalAlignment="Center" Text=""/>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <!-- 逐条轮播区：一次显示一条（科目 + 内容 + 备注 + 时段） -->
+                                                <Grid x:Name="HomeworkHost" MinHeight="120" MaxHeight="210">
+                                                    <StackPanel x:Name="HomeworkItemPanel" Spacing="6" VerticalAlignment="Top">
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <Border x:Name="HomeworkAccent" Width="5" CornerRadius="2.5"
+                                                                    Background="#FF2B7DE9" VerticalAlignment="Stretch"/>
+                                                            <TextBlock x:Name="HomeworkSubjectText" FontSize="24"
+                                                                       FontWeight="SemiBold" Foreground="#FF142A54"
+                                                                       VerticalAlignment="Center" Text="暂无作业"/>
+                                                        </StackPanel>
+                                                        <ScrollViewer x:Name="HomeworkContentScroll" MaxHeight="150"
+                                                                      VerticalScrollBarVisibility="Auto"
+                                                                      HorizontalScrollMode="Disabled">
+                                                            <TextBlock x:Name="HomeworkContentText" FontSize="21"
+                                                                       TextWrapping="Wrap" LineHeight="30"
+                                                                       Foreground="#FF1A1A1A" Text=""/>
+                                                        </ScrollViewer>
+                                                        <TextBlock x:Name="HomeworkNoteText" FontSize="15"
+                                                                   TextWrapping="Wrap" Foreground="#991A1A1A" Text=""/>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <StackPanel x:Name="HomeworkDots" Orientation="Horizontal" Spacing="6"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 模块右列 -->
+                                    <StackPanel Grid.Column="1" Spacing="12">
+
+                                        <!-- ============ 今日值日（大字号，适合大屏播放） ============ -->
+                                        <Border Style="{StaticResource ModuleCard}">
+                                            <StackPanel Spacing="10">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource ModuleTitle}" Text="今日值日" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="DutyDayText" Style="{StaticResource ModuleSub}"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center" Text="--"/>
+                                                </Grid>
+                                                <StackPanel x:Name="DutyList" Spacing="8"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- ============ 消息提醒班级选择（仅选择班级，无解释文字） ============ -->
+                                        <Border Style="{StaticResource ModuleCard}">
+                                            <StackPanel Spacing="8">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource ModuleTitle}" Text="消息提醒班级" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="ClassHintText" Style="{StaticResource ModuleSub}"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center" Text=""/>
+                                                </Grid>
+                                                <ComboBox x:Name="ClassCombo" HorizontalAlignment="Stretch" FontSize="15"
+                                                          PlaceholderText="-- 请选择班级 --"
+                                                          SelectionChanged="ClassCombo_SelectionChanged"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- ============ 最近一条消息（正文大字显示） ============ -->
+                                        <Border Style="{StaticResource ModuleCard}">
+                                            <StackPanel Spacing="8">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource ModuleTitle}" Text="最近消息" VerticalAlignment="Center"/>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                                        <TextBlock x:Name="LatestMessageTimeText" Style="{StaticResource ModuleSub}"
+                                                                   VerticalAlignment="Center" Text=""/>
+                                                        <Button Content="历史消息" FontSize="12" Padding="8,2"
+                                                                MinWidth="0" MinHeight="0" CornerRadius="6"
+                                                                Background="#14000000" BorderThickness="0"
+                                                                Click="HistoryButton_Click"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <TextBlock x:Name="LatestMessageSenderText" FontSize="18"
+                                                           FontWeight="SemiBold" Foreground="#FF142A54" Text="暂无新消息"/>
+                                                <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto"
+                                                              HorizontalScrollMode="Disabled">
+                                                    <TextBlock x:Name="LatestMessageText"
+                                                               FontSize="24" FontWeight="SemiBold"
+                                                               Foreground="#FF1A1A1A"
+                                                               LineHeight="34"
+                                                               TextWrapping="Wrap"
+                                                               Text="收到班级消息后，这里会用大字显示最近一条消息的具体内容。"/>
+                                                </ScrollViewer>
+                                            </StackPanel>
+                                        </Border>
+
+                                    </StackPanel>
+                                </Grid>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </Grid>
+
+                <!-- ==================== 第二屏：校园自动打铃系统 ==================== -->
+                <local:BellPage x:Name="BellScreen" Width="{Binding ActualWidth, ElementName=ScreenPager}"/>
+
+                <!-- ==================== 第三屏：点歌系统 ==================== -->
+                <local:MusicPage x:Name="MusicScreen" Width="{Binding ActualWidth, ElementName=ScreenPager}"/>
             </StackPanel>
-        </StackPanel>
+        </ScrollViewer>
 
-        <!-- 下半部分：左应用区 + 右天气 -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
-
-            <GridView x:Name="AppsGrid" Grid.Column="0"
-                      HorizontalAlignment="Center" VerticalAlignment="Top"
-                      Margin="20,20,0,0">
-                <GridView.ItemContainerTransitions>
-                    <TransitionCollection>
-                        <AddDeleteThemeTransition/>
-                        <ContentThemeTransition/>
-                    </TransitionCollection>
-                </GridView.ItemContainerTransitions>
-                <GridView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4"/>
-                    </ItemsPanelTemplate>
-                </GridView.ItemsPanel>
-                <GridView.ItemTemplate>
-                    <DataTemplate>
-                        <Button Width="100" Height="100" Margin="6"
-                                Background="#FFE6F0FA" Click="AppItem_Click"
-                                Tag="{Binding Path}">
-                            <StackPanel>
-                                <Image Source="{Binding Icon}" Width="32" Height="32" Margin="0,0,0,4"/>
-                                <TextBlock Text="{Binding Name}" FontSize="12" TextAlignment="Center"
-                                           TextWrapping="Wrap" MaxLines="2"/>
-                            </StackPanel>
-                        </Button>
-                    </DataTemplate>
-                </GridView.ItemTemplate>
-            </GridView>
-
-            <WebView2 x:Name="WeatherWebView" Grid.Column="1" Margin="0,20,20,20"/>
-        </Grid>
+        <!-- 底部屏幕指示圆点（可点击切换） -->
+        <StackPanel x:Name="PageDots" Orientation="Horizontal" HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom" Margin="0,0,0,10" Spacing="12"/>
     </Grid>
 </Page>

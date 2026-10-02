@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 
@@ -28,6 +28,15 @@ namespace SmartClassNight
                             UseShellExecute = true
                         });
                     }
+                    else if (string.IsNullOrEmpty(target))
+                    {
+                        // 解析不到目标时，直接交给 Shell 打开快捷方式（目标存在时同样能启动）
+                        Process.Start(new ProcessStartInfo(lnk)
+                        {
+                            UseShellExecute = true
+                        });
+                    }
+                    // target 解析到但文件不存在 → 目标未安装，静默跳过
                 }
                 catch (Exception ex)
                 {

@@ -31,6 +31,7 @@
                 <ListViewItem Content="应用管理" Tag="Apps"/>
                 <ListViewItem Content="任务栏" Tag="Taskbar"/>
                 <ListViewItem Content="预览体验计划" Tag="Preview"/>
+                <ListViewItem Content="更新与反馈" Tag="Update"/>
                 <ListViewItem Content="关于" Tag="About"/>
                 <!-- ClassIsland 相关入口 -->
                 <ListViewItem Content="ClassIsland 设置" Tag="ClassIsland"/>

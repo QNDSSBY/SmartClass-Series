@@ -1,0 +1,275 @@
+﻿<UserControl x:Class="SmartClassNight.BellPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- 卡片背景：高斯模糊半透明（与主页模块一致） -->
+        <AcrylicBrush x:Key="CardAcrylicBrush" TintColor="#FFFFFF" TintOpacity="0.30"
+                      TintLuminosityOpacity="0.55" FallbackColor="#D9FFFFFF"/>
+        <Style x:Key="CardBorder" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardAcrylicBrush}"/>
+            <Setter Property="BorderBrush" Value="#22000000"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="14,12"/>
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#CC1A1A1A"/>
+        </Style>
+        <Style x:Key="CardSub" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#991A1A1A"/>
+        </Style>
+        <Style x:Key="MiniButton" TargetType="Button">
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- 注意：留出左上角 20,62 的空白，避免与主窗口左上角的「更多功能」按钮重叠 -->
+    <Grid Background="Transparent" Margin="20,62,20,10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 顶部标题 ==================== -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12" Spacing="4">
+            <TextBlock Text="校园自动打铃系统" FontSize="22" FontWeight="Bold" Foreground="#FF1A1A1A"/>
+            <TextBlock Text="到点自动播放铃声，可设置多个时间与多种铃声；关闭后不响铃"
+                       FontSize="14" Foreground="#991A1A1A"/>
+        </StackPanel>
+
+        <!-- ==================== 主体：左时间表 / 右开关与铃声库 ==================== -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled"
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollMode="Auto">
+        <Grid ColumnSpacing="14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="58*"/>
+                <ColumnDefinition Width="42*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ============ 左列：打铃时间表 ============ -->
+            <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                <Grid RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <TextBlock Text="打铃时间表" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <TextBlock x:Name="TimeCountText" Text="共 0 项" Style="{StaticResource CardSub}"
+                                       VerticalAlignment="Center"/>
+                            <Button Content="试听默认铃声" Style="{StaticResource MiniButton}"
+                                    Background="#14000000" BorderThickness="0" Click="PreviewDefault_Click"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 新增一条 -->
+                    <Grid Grid.Row="1" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TimeInput" Grid.Column="0" FontSize="15" Height="36"
+                                 PlaceholderText="HH:mm，如 08:00"/>
+                        <TextBox x:Name="LabelInput" Grid.Column="1" FontSize="15" Height="36"
+                                 PlaceholderText="如：第 1 节上课"/>
+                        <ComboBox x:Name="NewSoundCombo" Grid.Column="2" FontSize="15" Height="36"
+                                  HorizontalAlignment="Stretch" DisplayMemberPath="Name"/>
+                        <Button x:Name="AddButton" Grid.Column="3" Content="添加" FontSize="15"
+                                Height="36" Padding="16,0" CornerRadius="6"
+                                Background="#FF1E3A8A" Foreground="White" Click="AddButton_Click"/>
+                    </Grid>
+
+                    <Grid Grid.Row="2">
+                        <ListView x:Name="TimeList" SelectionMode="None" Background="Transparent">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Padding" Value="4,6"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnSpacing="10" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="96"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- 时间 + 铃声 -->
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding TimeDisplay}" FontSize="26" FontWeight="Bold"
+                                                       Foreground="#FF1A1A1A"/>
+                                        </StackPanel>
+
+                                        <!-- 名称 + 铃声文件名 -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="{Binding Label}" FontSize="18" Foreground="#FF1A1A1A"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding SoundDisplay}" FontSize="14"
+                                                       Foreground="#991A1A1A" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+
+                                        <CheckBox Grid.Column="2" Content="启用" FontSize="14" MinWidth="0"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="{Binding Enabled, Mode=TwoWay}"
+                                                  Click="ItemEnabled_Click"/>
+
+                                        <Button Grid.Column="3" Content="试听" Style="{StaticResource MiniButton}"
+                                                VerticalAlignment="Center"
+                                                Background="#14000000" BorderThickness="0"
+                                                Click="ItemPreview_Click"/>
+
+                                        <Button Grid.Column="4" Content="删除" Style="{StaticResource MiniButton}"
+                                                VerticalAlignment="Center"
+                                                Background="#14C62828" Foreground="#FFC62828" BorderThickness="0"
+                                                Click="ItemDelete_Click"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <!-- 空状态提示 -->
+                        <StackPanel x:Name="EmptyHint" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Spacing="6" Visibility="Collapsed">
+                            <TextBlock Text="还没有打铃时间" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="#991A1A1A" HorizontalAlignment="Center"/>
+                            <TextBlock Text="在上方输入时间与名称后点「添加」，例如 08:00 第 1 节上课"
+                                       FontSize="14" Foreground="#661A1A1A" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ============ 右列：开关与音量 / 铃声库 ============ -->
+            <Grid Grid.Column="1" RowSpacing="14">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 打铃开关与音量 -->
+                <Border Grid.Row="0" Style="{StaticResource CardBorder}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="打铃开关与音量" Style="{StaticResource CardTitle}"/>
+
+                        <ToggleSwitch x:Name="EnableSwitch" Header="开启打铃系统" FontSize="15"
+                                      OnContent="已开启" OffContent="已关闭"
+                                      Toggled="EnableSwitch_Toggled"/>
+
+                        <Slider x:Name="VolumeSlider" Header="音量" Minimum="0" Maximum="100"
+                                StepFrequency="1" FontSize="15"
+                                ValueChanged="VolumeSlider_ValueChanged"/>
+
+                        <Grid>
+                            <TextBlock x:Name="VolumeText" Text="音量：80%" Style="{StaticResource CardSub}"
+                                       VerticalAlignment="Center"/>
+                            <Button Content="试听音量" Style="{StaticResource MiniButton}"
+                                    HorizontalAlignment="Right"
+                                    Background="#14000000" BorderThickness="0"
+                                    Click="PreviewDefault_Click"/>
+                        </Grid>
+
+                        <TextBlock Text="试听使用默认铃声；到点打铃由后台服务自动执行。"
+                                   FontSize="14" Foreground="#661A1A1A" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 铃声库 -->
+                <Border Grid.Row="1" Style="{StaticResource CardBorder}">
+                    <Grid RowSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <TextBlock Text="铃声库" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                            <Button Content="添加铃声…" Style="{StaticResource MiniButton}"
+                                    HorizontalAlignment="Right"
+                                    Background="#14000000" BorderThickness="0"
+                                    Click="AddSounds_Click"/>
+                        </Grid>
+
+                        <TextBlock x:Name="DefaultSoundText" Grid.Row="1" Text="默认铃声：未设置"
+                                   Style="{StaticResource CardSub}" TextWrapping="Wrap"/>
+
+                        <TextBlock Grid.Row="2" Text="支持 mp3 / wav / m4a / flac / wma / aac / ogg"
+                                   FontSize="13" Foreground="#661A1A1A"/>
+
+                        <Grid Grid.Row="3">
+                            <ListView x:Name="SoundList" SelectionMode="None" Background="Transparent">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Padding" Value="4,5"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnSpacing="8" VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Text="{Binding Name}" FontSize="16" Foreground="#FF1A1A1A"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Path}" FontSize="13" Foreground="#991A1A1A"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+
+                                            <Button Grid.Column="1" Content="设为默认" Style="{StaticResource MiniButton}"
+                                                    VerticalAlignment="Center"
+                                                    Background="#14000000" BorderThickness="0"
+                                                    Click="SetDefault_Click"/>
+
+                                            <Button Grid.Column="2" Content="移除" Style="{StaticResource MiniButton}"
+                                                    VerticalAlignment="Center"
+                                                    Background="#14C62828" Foreground="#FFC62828"
+                                                    BorderThickness="0"
+                                                    Click="RemoveSound_Click"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+
+                            <TextBlock x:Name="SoundEmptyHint" Text="铃声库为空，点右上「添加铃声…」导入本地铃声文件"
+                                       FontSize="14" Foreground="#661A1A1A" TextWrapping="Wrap"
+                                       VerticalAlignment="Center" Visibility="Collapsed"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+        </ScrollViewer>
+
+        <!-- ==================== 底部状态 ==================== -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="2,10,0,0" Spacing="18">
+            <TextBlock x:Name="LastRingText" Text="最近：暂无记录" FontSize="14" Foreground="#991A1A1A"/>
+            <TextBlock x:Name="NextRingText" Text="下一次打铃：暂无安排" FontSize="14" Foreground="#991A1A1A"/>
+            <TextBlock x:Name="ConfigHintText" Text="配置保存在本机，关闭该界面后仍会自动打铃" FontSize="14"
+                       Foreground="#661A1A1A"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
